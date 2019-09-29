@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<!--The code is modified from: https://jasonneylon.wordpress.com/2013/09/05/two-sided-horizontal-barchart-using-d3-js/-->
+<html>
+<head>
+    <title>Bar Chart</title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Crimson Text|Work Sans|Quantico|Audiowide|Quicksand|Arvo' rel='stylesheet' type='text/css'>
+    <meta name="viewport" content="initial-scale = 1.0,maximum-scale = 1.0" />
+    <style type="text/css">
+
+body {
+  font: 11px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+.tooltip {
+  position: absolute;
+  width: 200px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.infoYear {
+  position: absolute;
+  width: 250px;
+  height: 28px;
+  pointer-events: none;
+  font-family: 'Work Sans';
+  font-size:15px;
+  font-weight: bold;
+}
+
+.infoMatch {
+  position: absolute;
+  width: 300px;
+  height: 28px;
+  pointer-events: none;
+  font-family: 'Work Sans';
+}
+    </style>
+</head>
+<body>
+<h2 style ="font-size: 25px;font-family: Crimson Text">Effect of Return and 2nd Serve Point Won in Possibility of Victory</h2>
+<script type="text/javascript">
+
+    function test(data){
+        // console.log(data)
+    }
+    
+    function render() {
+    console.log(dataset)
+    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 800 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+    var data = []
+    var secPointWon = []
+    var returnPoint = []
+    var player = []
+    dataPoint = []
+    for (i = 0; i < dataset.length ; i++) {
+        // data.push([dataset[i]["secPointWon1"], dataset[i]["return1"], dataset[i]["year"], dataset[i]["player1"],
+        // dataset[i]["secPointWon1"], dataset[i]["return1"], dataset[i]["year"], dataset[i]["player1"]])
+        secPointWon.push(dataset[i]["secPointWon1"])
+        secPointWon.push(dataset[i]["secPointWon2"])
+        returnPoint.push(dataset[i]["return1"])
+        returnPoint.push(dataset[i]["return2"])
+        player.push(dataset[i]["player1"])
+        player.push(dataset[i]["player2"])
+        dataPoint.push([dataset[i]["return1"], dataset[i]["secPointWon1"],dataset[i]["player1"],
+        dataset[i]["year"],"Winner",dataset[i]["results"].replace(/_/g, "-")] )
+        dataPoint.push([dataset[i]["return2"],dataset[i]["secPointWon2"],dataset[i]["player2"],
+        dataset[i]["year"],"Loser", dataset[i]["results"].replace(/_/g, "-")])
+    }
+    // var secPointWon =  dataset["secPointWon1"]
+    console.log(dataPoint)
+    // secPointWon = secPointWon.concat(dataset["secPointWon2"])
+    // var returnPoint = dataset["return1"]
+    // returnPoint = returnPoint.concat(dataset["return2"])
+    // console.log(returnPoint)
+    // console.log(d)
+/* 
+ * value accessor - returns the value to encode for a given data object.
+ * scale - maps value to a visual display encoding, such as a pixel position.
+ * map function - maps from data value to display value
+ * axis - sets up axis
+ */ 
+
+// setup x 
+var xValue = function(d) { return d;}, // data -> value
+    xScale = d3.scale.linear().range([0, width]), // value -> display
+    xMap = function(d) {  return xScale(xValue(d[0]));}, // data -> display
+    xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+
+// setup y
+var yValue = function(d) {return d;}, // data -> value
+    yScale = d3.scale.linear().range([height, 0]), // value -> display
+    yMap = function(d) { return yScale(yValue(d[1]));}, // data -> display
+    yAxis = d3.svg.axis().scale(yScale).orient("left");
+
+// setup fill color
+var cValue = function(d) {return d[4];},
+    color = d3.scale.ordinal().domain(["Winner","Loser"]).range(["Yellow","Blue"]);
+
+// add the graph canvas to the body of the webpage
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right + 20)
+    .attr("height", height + margin.top + margin.bottom + 10)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    d3.select("svg").attr("align","center");
+// add the tooltip area to the webpage
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+var infoYear = d3.select("body").append("div")
+    .attr("class", "infoYear")
+    .style("opacity", 0);
+ var infoMatch = d3.select("body").append("div")
+    .attr("class", "infoMatch")
+    .style("opacity", 0);
+
+
+
+// load data
+// d3.csv("cereal.csv", function(error, data) {
+
+//   // change string (from CSV) into number format
+//   data.forEach(function(d) {
+//     d.Calories = +d.Calories;
+//     d["Protein (g)"] = +d["Protein (g)"];
+// //    console.log(d);
+//   });
+
+  // don't want dots overlapping axis, so add in buffer to data domain
+  xScale.domain([0, 100]);
+  yScale.domain([0, 100]);
+
+  // x-axis
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(10," + height + ")")
+      .call(xAxis)
+    .append("text")
+      .attr("class", "label")
+      .attr("x", width/2 + 50)
+      .attr("y", 30)
+      .style("text-anchor", "end")
+      .text("Return Point (%)");
+
+  // y-axis
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(10,0)")
+      .call(yAxis)
+    .append("text")
+      .attr("class", "label")
+      .attr("transform", "rotate(-90)")
+      .attr("y",-40)
+      .attr("x",-150)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Second Point Won (%)");
+// console.log(d3.min(xValue))
+// console.log(d3.min(xScale))
+// console.log(d3.min(xMap))
+//The horizontal dashed line that appears when a circle marker is moused over
+var g = svg.selectAll()
+        .data(dataPoint).enter().append("g").attr("class", "data");
+
+g.append("circle")
+        //circle radius is increased
+    .attr("r", 4.5)
+    .attr("class", "dot")
+    .attr("cx", function(d) { return xScale(xValue(d[0])) + 10; })
+    .attr("cy", function(d) { return yScale(yValue(d[1])); })
+    .style("fill", function(d) { return color(cValue(d));}) ;
+g.append("line")
+        .attr("class", "x")
+        .data(dataPoint)
+        .attr("id", "dashedLine")
+        .style("stroke", "steelblue")
+        .style("stroke-dasharray", "3,3")
+        .style("opacity", 0)
+        .attr("x1", function(d) { return xScale(xValue(d[0])) + 10; })
+        .attr("y1", function(d) { return yScale(yValue(d[1])); })
+		    //d3.min gets the min date from the date x-axis scale
+		    .attr("x2", function(d) { return xScale(xValue(0)) + 10; })
+        .attr("y2", function(d) { return yScale(yValue(d[1])); });
+
+  //The vertical dashed line that appears when a circle marker is moused over
+  g.append("line")
+        .data(dataPoint)
+        .attr("class", "y")
+        .attr("id", "dashedLine")
+        .style("stroke", "steelblue")
+        .style("stroke-dasharray", "3,3")
+        .style("opacity", 0)
+        .attr("x1", function(d) { return xScale(xValue(d[0])) + 10; })
+        .attr("y1", function(d) { return yScale(yValue(d[1])); })
+		    .attr("x2", function(d) { return xScale(xValue(d[0])) + 10; })
+        .attr("y2", height);
+
+  // draw dots
+  var dot = [];
+  var image;
+  g.selectAll(".dot")
+    //   .data(dataPoint)
+    // .enter().append("circle")
+    //   .attr("class", "dot")
+    //   .attr("r", 3.5)
+    //   .attr("cx", xMap)
+    //   .attr("cy", yMap)
+    //   .style("fill", function(d) { return color(cValue(d));}) 
+      .on("mouseover", function(d,index) {
+        //   console.log(d[3]);
+        dot = []
+        dot = svg.selectAll(".data")[0];
+        image = svg.append("image").attr("width",150) .attr("height",150).style("display","inline")
+                .attr("opacity","0.5");
+        var playerName = []
+        var pointHidden = [];
+        for(var k = 0; k < dot.length; k++){
+            if(dot[k]["__data__"][3] != d[3]){
+                pointHidden.push(k);
+            }
+            else {
+                if(dot[k]["__data__"][4] == "Winner") {
+                    playerName.push(dot[k]["__data__"][2])
+                    playerName.push(dot[k+1]["__data__"][2])
+                    // d3.select(this.parentNode.nextElementSibling).select(".dot")
+                    //     .transition()
+                    //     .duration(200)
+                    //     .attr('r',10)
+                    //     .attr('stroke-width',3)
+                }
+                else {
+                    playerName.push(dot[k-1]["__data__"][2])
+                    playerName.push(dot[k]["__data__"][2])
+                    // d3.select(this.parentNode.previousElementSibling).select(".dot")
+                    // .transition()
+                    // .duration(200)
+                    // .attr('r',10)
+                    // .attr('stroke-width',3)
+                }
+            }
+        }
+        // console.log(dot[0].length)
+        // console.log(dot[0][0]["__data__"])
+        console.log(d)
+        console.log(dot[0])
+        console.log(playerName)
+          tooltip.transition()
+               .duration(100)
+               .style("opacity", .9);
+          tooltip.html(d[2] + "<br/> (" + xValue(d[0]) 
+	        + ", " + yValue(d[1]) + ")")
+               .style("left", (d3.event.pageX + 5) + "px")
+               .style("top", (d3.event.pageY - 28) + "px");
+
+        var moreData;
+        var text = '<span style = "font-weight:bold;font-size:15px;">' + playerName[0] +
+         "</span>" + " beat " + '<span style = "font-weight:bold;font-size:15px;">' + playerName[1] + "<br/>"+
+         '<span style = "font-weight:bold;font-size:15px;">'  + d[5] + "</span>"
+        
+        //  d3.select(this)
+        //   .transition()
+        //   .duration(200)
+        //   .attr('r',15)
+        //   .attr('stroke-width',3)
+          
+        // console.log(index);
+        console.log(moreData)
+        // console.log(dataPoint[moreData][2])
+        console.log(text)
+        infoYear.transition()
+               .duration(100)
+               .style("opacity", .9);
+        infoYear.html( '<span style = "font-size:15px;">Australian Open Final ' + d[3])
+               .style("left", 100 + "px")
+               .style("top", 100 + "px");
+
+        infoMatch.transition()
+               .duration(100)
+               .style("opacity", .9);
+        infoMatch.html(text)
+               .style("left", width - 280 + "px")
+               .style("top", 450 + "px");
+        
+        var position;
+        if (d[4] == "Winner") position = [450,50];
+        else position = [0,280];
+        image.attr('xlink:href',d[2] + ".png").transition()		
+            .duration(100)
+            .attr('x',position[0])
+            .attr('y',position[1]);
+
+            d3.select(this.nextElementSibling).transition()		
+            .duration(100)		
+            .style("opacity", .9);
+            d3.select(this.nextElementSibling.nextElementSibling).transition()		
+                .duration(100)		
+                .style("opacity", .9);
+        for(var k = 0; k < pointHidden.length; k++){
+            // console.log(k)
+            d3.select(dot[pointHidden[k]]).transition()		
+            .duration(100)		
+            .style("opacity", .2);
+        }
+      })
+      .on("mouseout", function(d) {
+        dot = svg.selectAll(".data")[0];
+
+        for(var k = 0; k < dot.length; k++){
+            d3.select(dot[k]).transition()		
+            .duration(100)		
+            .style("opacity", 1);
+        }
+          tooltip.transition()
+               .duration(100)
+               .style("opacity", 0);
+        infoYear.transition()
+               .duration(100)
+               .style("opacity", 0);
+        infoMatch.transition()
+               .duration(100)
+               .style("opacity", 0);
+        d3.select(this.nextElementSibling).transition()		
+            .duration(100)		
+            .style("opacity", 0);
+        d3.select(this.nextElementSibling.nextElementSibling).transition()		
+            .duration(100)		
+            .style("opacity", 0);
+        image.transition()		
+            .duration(100).remove();
+        // d3.select(this)
+        //   .transition()
+        //   .duration(200)
+        //   .attr('r',5)
+        //   .attr('stroke-width',1)
+      });
+
+  // draw legend
+  var legend = svg.selectAll(".legend")
+      .data(color.domain())
+    .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(20," + i * 20 + ")"; });
+
+  // draw legend colored rectangles
+  legend.append("rect")
+      .attr("x", width - 45)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
+
+  // draw legend text
+  legend.append("text")
+      .attr("x", width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "start")
+      .text(function(d) { return d;})
+};
+
+    const nameHeader = ["Aces","Double faults","Break points won","1st Point Won","2nd Point Won","1st Serve",
+    "Fastest serve", "1st Serve Average", "2nd Serve Average","Return points won","Total points won","Winners","Error","Net points won"]
+    const dataHeader = ["ace","double","break","firstPointWon", "secPointWon", "firstServe", "return", "total", "winner", "error"];
+
+    function type(d) {
+        for (i = 0; i < dataHeader.length; i ++) {
+            // console.log(dataHeader[i] + "1")
+            if(d[dataHeader[i] + "1"].indexOf("%") != -1) {
+                // console.log(d[dataHeader[i] + "1"]);
+                d[dataHeader[i] + "1"] = +d[dataHeader[i] + "1"].substring(0,d[dataHeader[i] + "1"].length-1);
+                // console.log(d[dataHeader[i] + "1"]);
+            }
+                
+            else
+                d[dataHeader[i] + "1"] = +d[dataHeader[i] + "1"]
+            if(d[dataHeader[i] + "2"].indexOf("%") != -1){
+                // console.log(d[dataHeader[i] + "2"]);
+                d[dataHeader[i] + "2"] = +d[dataHeader[i] + "2"].substring(0,d[dataHeader[i] + "2"].length-1);
+                // console.log(d[dataHeader[i] + "2"]);
+            }
+            else
+                d[dataHeader[i] + "2"] = +d[dataHeader[i] + "1"]
+        }
+        d["year"] = +d["year"];
+        // console.log(d);
+        dataset.push(d)
+        return d;
+    }
+    i = 0
+    i = i + 1
+    console.log(i)
+    var dataset = []
+    i = i - 1
+    d3.csv("10years_AusOpen_MaleFinalMatchesDetail.csv", type, test);
+    setTimeout(function(){
+render();
+},200);
+
+</script>
+</body>
+</html>
